@@ -1,0 +1,1 @@
+"# Verticle_slice-FullStack-" 
