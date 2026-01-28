@@ -1,0 +1,82 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+
+model Invoice {
+  id            String    @id @default(uuid())
+  invoiceNumber String    @unique
+  status        String
+  currency      String
+  discountType  String?
+  discountValue Float?
+  totalAmount   Float
+  balanceDue    Float
+  voidReason    String?
+  createdBy     String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  customerId    String?
+  customer      Customer?   @relation(fields: [customerId], references: [id])
+
+  lineItems     LineItem[]
+  payments      Payment[]
+  auditLogs     AuditLog[]
+}
+
+model LineItem {
+  id          String   @id @default(uuid())
+  invoiceId   String
+  description String
+  quantity    Float
+  unitPrice   Float
+  total       Float
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id])
+}
+
+model Payment {
+  id         String   @id @default(uuid())
+  invoiceId  String
+  amount     Float
+  method     String
+  createdAt  DateTime @default(now())
+  createdBy  String
+  invoice    Invoice  @relation(fields: [invoiceId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  entity    String
+  entityId  String
+  action    String
+  metadata  Json?
+  createdBy String
+  createdAt DateTime @default(now())
+  invoice   Invoice? @relation(fields: [entityId], references: [id])
+}
+
+model IdempotencyKey {
+  key          String   @id
+  responseBody Json
+  createdAt    DateTime @default(now())
+}
+
+model Customer {
+  id          String @id @default(uuid())
+  phoneNumber String @unique
+  remainingAmount Float @default(0)
+  invoices       Invoice[]
+}
+
