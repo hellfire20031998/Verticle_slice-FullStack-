@@ -14,6 +14,8 @@ export default function InvoiceForm() {
   const [discountType, setDiscountType] = useState("NONE");
   const [discountValue, setDiscountValue] = useState(0);
 
+  const user = localStorage.getItem("user");
+
   const addItem = () => {
     setItems([...items, { description: "", quantity: 1, unitPrice: 0 }]);
   };
@@ -85,12 +87,12 @@ export default function InvoiceForm() {
       lineItems: items,
       discountType,
       discountValue: discountType === "NONE" ? 0 : discountValue,
-      createdBy: "op1",
-    }).then(() => navigate("/"));
+      createdBy: user.id,
+    }).then(() => navigate("/invoices"));
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "30px", width: "100%" }}>
+    <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
 
       {/* HEADER WITH BACK BUTTON */}
       <div
@@ -104,7 +106,7 @@ export default function InvoiceForm() {
         <h2 style={{ fontSize: "24px", fontWeight: 700 }}>Create Invoice</h2>
 
         <button
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/invoices")}
           style={{
             padding: "8px",
             background: "#eee",

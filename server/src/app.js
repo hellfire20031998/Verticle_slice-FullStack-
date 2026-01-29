@@ -5,6 +5,10 @@ import invoiceRoutes from "./routes/invoices/route.js";
 import paymentRoutes from "./routes/payments/route.js";
 import errorHandler from "./middlewares/errorHandler.js";
 import customerRoutes from "./routes/customers.js";
+import authRoutes from "./routes/auth.js";
+import auditLogRoutes from "./routes/auditLog.js";
+
+
 
 
 dotenv.config();
@@ -14,9 +18,12 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/customers", customerRoutes);
+app.use("/auth",authRoutes);
 
 app.use("/invoices", invoiceRoutes);
 app.use("/payments", paymentRoutes);
+
+app.use("/audit-logs", auditLogRoutes);
 
 app.use(errorHandler);
 

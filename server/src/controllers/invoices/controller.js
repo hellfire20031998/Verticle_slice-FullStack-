@@ -1,8 +1,12 @@
+import { getUserNameFromToken } from "../../middlewares/auth.js";
 import * as InvoiceService from "../../services/invoices/service.js";
 
 export async function createInvoice(req, res, next) {
   try {
-    const data = await InvoiceService.createInvoice(req.body);
+    const token = req.headers.authorization;
+    
+    const user = await getUserNameFromToken(token)
+    const data = await InvoiceService.createInvoice(req.body, user);
     res.status(201).json(data);
   } catch (err) {
     next(err);

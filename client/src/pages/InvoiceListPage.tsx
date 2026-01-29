@@ -15,21 +15,15 @@ export default function InvoiceListPage() {
 
   const limit = 10;
 
-  // -----------------------------
-  // DEBOUNCE PHONE SEARCH
-  // -----------------------------
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedPhone(phoneSearch.trim());
-      setPage(1); // reset to first page when search changes
+      setPage(1);
     }, 500);
 
     return () => clearTimeout(timer);
   }, [phoneSearch]);
 
-  // -----------------------------
-  // LOAD INVOICES
-  // -----------------------------
   useEffect(() => {
     loadInvoices(page, status, debouncedPhone);
   }, [page, status, debouncedPhone]);
@@ -49,7 +43,7 @@ export default function InvoiceListPage() {
 
   return (
     <div className="page-container">
-      <div className="card">
+      <div className="">
         <h2>Invoices</h2>
 
         <Link to="/invoices/create">

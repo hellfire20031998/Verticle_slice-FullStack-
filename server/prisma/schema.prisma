@@ -80,3 +80,14 @@ model Customer {
   invoices       Invoice[]
 }
 
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("OPERATOR")
+  createdAt DateTime @default(now())
+}
+
+

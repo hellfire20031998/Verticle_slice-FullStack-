@@ -4,8 +4,9 @@ import { computeTotals, canVoidInvoice } from "../../utils/stateMachine.js";
 import { addAuditLog } from "../audit/service.js";
 
 
-export async function createInvoice(payload) {
-  const { lineItems, discountType, discountValue, createdBy, phoneNumber } = payload;
+export async function createInvoice(payload, user) {
+  
+  const { lineItems, discountType, discountValue, phoneNumber } = payload;
 
   if (!lineItems || lineItems.length === 0) {
     throw new Error("Invoice must contain at least one line item.");
@@ -24,7 +25,6 @@ export async function createInvoice(payload) {
 
     const customer = await createCustomerIfNotExists(phoneNumber);
 
-    // 2️⃣ Create invoice linked to customer
     const invoice = await tx.invoice.create({
       data: {
         invoiceNumber,
@@ -34,12 +34,11 @@ export async function createInvoice(payload) {
         discountValue,
         totalAmount: discountedTotal,
         balanceDue: discountedTotal,
-        createdBy,
-        customerId: customer.id,   // ⭐ LINK CUSTOMER
+        createdBy: user,
+        customerId: customer.id,
       },
     });
 
-    // 3️⃣ Create line items
     for (const item of lineItems) {
       await tx.lineItem.create({
         data: {
@@ -58,7 +57,7 @@ export async function createInvoice(payload) {
       entityId: invoice.id,
       action: "CREATED",
       metadata: { invoiceNumber, phoneNumber },
-      createdBy,
+      createdBy:user,
     });
 
     // 5️⃣ Return invoice with items

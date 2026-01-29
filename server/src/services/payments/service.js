@@ -4,7 +4,8 @@ import { addAuditLog } from "../audit/service.js";
 import { updateInvoicePaymentStatus } from "../../utils/stateMachine.js";
 
 export async function createPayment(invoiceId, payload, idempotencyKey = null) {
-  const { amount, method, createdBy } = payload;
+  
+  const { amount, method, userId } = payload;
 
   if (amount <= 0) {
     throw new Error("Payment amount must be positive.");
@@ -13,7 +14,7 @@ export async function createPayment(invoiceId, payload, idempotencyKey = null) {
   return await prisma.$transaction(async (tx) => {
     const invoice = await tx.invoice.findUnique({
       where: { id: invoiceId },
-      include: { payments: true },
+      include: { payments: true, customer: true },
     });
 
     if (!invoice) throw new Error("Invoice not found");
@@ -22,22 +23,27 @@ export async function createPayment(invoiceId, payload, idempotencyKey = null) {
       throw new Error("Cannot apply payment to a voided invoice.");
     }
 
+    let appliedAmount = amount;
+    let extraCredit = 0;
+
+    // ⭐ OVERPAYMENT LOGIC
     if (amount > invoice.balanceDue) {
-      throw new Error("Payment exceeds invoice balance.");
+      extraCredit = amount - invoice.balanceDue;     // money to be added as credit
+      appliedAmount = invoice.balanceDue;            // only balanceDue goes to invoice
     }
 
-    // Create payment
+    // Save payment with appliedAmount (not full amount)
     const payment = await tx.payment.create({
       data: {
         invoiceId,
-        amount,
+        amount: appliedAmount,
         method,
-        createdBy,
+        createdBy: userId,
       },
     });
 
-    // Update invoice totals + status
-    const newBalanceDue = invoice.balanceDue - amount;
+    // Update invoice totals
+    const newBalanceDue = invoice.balanceDue - appliedAmount;
     const newStatus = updateInvoicePaymentStatus(
       newBalanceDue,
       invoice.totalAmount
@@ -51,16 +57,25 @@ export async function createPayment(invoiceId, payload, idempotencyKey = null) {
       },
     });
 
-    // FIXED AUDIT LOG
+    if (extraCredit > 0) {
+      await tx.customer.update({
+        where: { id: invoice.customerId },
+        data: {
+          remainingAmount: invoice.customer.remainingAmount + extraCredit,
+        },
+      });
+    }
+
+    // AUDIT LOG
     await addAuditLog(tx, {
       entity: "PAYMENT",
-      entityId: invoice.id,   
+      entityId: invoice.id,
       action: "PAYMENT_ADDED",
-      metadata: { amount, method },
-      createdBy,
+      metadata: { amount, appliedAmount, extraCredit, method },
+      createdBy: userId,
     });
 
-    // Save idempotency key (if any)
+    // IDEMPOTENCY
     if (idempotencyKey) {
       await tx.idempotencyKey.create({
         data: {
@@ -70,6 +85,12 @@ export async function createPayment(invoiceId, payload, idempotencyKey = null) {
       });
     }
 
-    return payment;
+    return {
+      ...payment,
+      extraCredit,
+      invoiceStatus: newStatus,
+    };
   });
 }
+
+

@@ -1,7 +1,12 @@
 import axios from "axios";
 
-const API = axios.create({
+const token = localStorage.getItem("token")
+
+export const API = axios.create({
   baseURL: "http://localhost:4000",
+  headers:{
+      Authorization :`Bearer ${token} ` 
+    }
 });
 
 export const createPayment = (invoiceId: string, payload: any) => {

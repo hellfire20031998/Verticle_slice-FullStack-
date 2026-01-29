@@ -33,7 +33,7 @@ export default function InvoiceDetailPage() {
     <div style={styles.container}>
       {/* TOP NAV BUTTONS */}
       <div style={styles.topNav}>
-        <button style={styles.navBtn} onClick={() => navigate("/")}>
+        <button style={styles.navBtn} onClick={() => navigate("/invoices")}>
           ← Back to List
         </button>
 
