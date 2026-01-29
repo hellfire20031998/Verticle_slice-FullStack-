@@ -1,7 +1,14 @@
+import { decodeToken } from "../../middlewares/auth.js";
 import * as auditLogService from "../../services/audit/service.js";
 
 export async function listAuditLogs(req, res, next) {
   try {
+   
+    const token = req.headers.authorization;
+
+    const role =  decodeToken(token.split(" ")[1]).role;
+
+    if(role === 'SUPERVISOR') {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const entity = req.query.entity || undefined;
@@ -9,7 +16,10 @@ export async function listAuditLogs(req, res, next) {
 
     const data = await auditLogService.listAuditLogs({ page, limit, entity, invoiceId });
 
-    res.json(data);
+    return res.json(data);
+    }
+      return res.status(401).json({message  :"Access denied!"})
+  
   } catch (err) {
     next(err);
   }

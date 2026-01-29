@@ -52,7 +52,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </nav>
 
         {
-          user.role ==="SUPERVISOR" || user.role === "ADMIN" &&   <nav style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          user.role ==="SUPERVISOR" &&   <nav style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           <Link style={link} to="/audit-logs">Audits</Link>
         </nav>
 
